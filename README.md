@@ -1,0 +1,1 @@
+This repository is used for store my practice for text mining.
