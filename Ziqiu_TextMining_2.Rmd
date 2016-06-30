@@ -1,0 +1,113 @@
+---
+title: "Ziqiu Practice"
+author: "Ziqiu"
+date: "June 7, 2016"
+output: html_document
+---
+
+Create regular expressions for the patterns below:
+
+Match any of the following punctuation characters in the ASCII table: !“#$%&’()+,
+```{r}
+"[[:punct:]]"
+```
+
+Create one regular expression to match all common misspellings of calendar (see https://en.wikipedia.org/wiki/Wikipedia:Lists_of_common_misspellings/C)
+```{r}
+#calander (calendar, calender, colander)
+"c[a|e|o]l[e|a]nder"
+```
+
+Create one regular expression to match any character except line breaks.
+```{r}
+".*\N"
+```
+
+You need to validate a ZIP code (U.S. postal code), allowing both the five-digit and nine-digit (called ZIP+4) formats. The regex should match 02115 and 02115-5515, but not 2115, 2115-5515, 21155515,021155515, etc.
+```{r}
+"[0-9]{5}(\-[0-9]{4})?"
+```
+
+You need to validate a legit any password for your website. Passwords have the following complexity requirements: Length between 8 and 32 characters, ASCII visible and space characters only, One or more uppercase letters, One or more lowercase letters, One or more special characters (ASCII punctuation)
+```{r}
+if(grepl("[a-z]+",x)&grepl("[A-Z]+",x)& grepl("[0-9]+",x)&grepl("[[:punct:]]",x))
+  return(TRUE)
+```
+
+Load the file M08_tweets.csv (it is online at ‘http://nikbearbrown.com/YouTube/MachineLearning/M08/M08_tweets.csv’)
+
+Complete the following:
+Extract a list of the top 9 users (e.g. @NikBearBrown)
+Extract a list of the top 9 hashtags (e.g. #Bear)
+```{r}
+require(stringr)
+require(tm)
+require(wordcloud)
+tw<-read.csv("http://nikbearbrown.com/YouTube/MachineLearning/M08/M08_tweets.csv",header = FALSE)
+
+str1.corpus <- Corpus(DataframeSource(data.frame(tw)))
+#inspect(str1.corpus)
+str1.clean<-tm_map(str1.corpus, stripWhitespace)
+str1.clean.lc <- tm_map(str1.clean, content_transformer(tolower))
+str1.clean <- tm_map(str1.clean.lc, removeWords, stopwords("english"))
+str1.tdm <- TermDocumentMatrix(str1.clean, control = list(minWordLength = 1))
+str1.tdm
+#inspect(str1.tdm)
+list1<-findFreqTerms(str1.tdm, lowfreq=220)
+grep("@.+",list1,value = TRUE)
+list2<-findFreqTerms(str1.tdm, lowfreq=520)
+grep("#.+",list2,value = TRUE)
+```
+From the frequency, we can see the top9 users are "@darkestdungeon", "@freakingtrue", "@hoodieallen", "@infoduniabahasa", "@juegodetronostm", "@nickidaily", "@nickiworldnews", "@sincerelytumblr", "@youtube".
+Top9 hashtags are:"#android"     "#bigdata"     "#game"        "#gamedev"     "#gameinsight" "#indiedev" "#indiegame"   "#ipad"        "#ipadgames,"  "#kca"         "#unity3d" 
+
+Find the top 5 most positve tweets
+Find the top 5 most negative tweets
+Create a world cloud of 100 related tweets
+Which tweets could be classified as game development?
+```{r}
+tw<-as.matrix(tw)
+# remove retweet entities
+tw <- gsub("(RT|via)((?:\\b\\W*@\\w+)+)", "", tw)
+# remove at people
+tw <- gsub("@\\w+", "", tw)
+# remove punctuation
+tw <- gsub("[[:punct:]]", "", tw)
+# remove numbers
+tw <- gsub("[[:digit:]]", "", tw)
+# remove html links
+tw <- gsub("http\\w+", "", tw)
+# remove unnecessary spaces
+tw <- gsub("[ \t]{2,}", "", tw)
+tw <- gsub("^\\s+|\\s+$", "", tw)
+# classify emotion
+tw
+require(qdap)
+ps<-polarity(tw)
+data<-as.data.frame(ps$all)
+negData<-data[order(data[,3]),]
+negData[1:5,]
+#The top five negative tweets are:
+#line 22294 Pathetic shitty ass fucking joke of a fucking team get bent fuck this game is off u guys r a fucking joke
+#line 45076 Pathetic shitty ass fucking joke of a fucking team get bent fuck this game is off u guys r a fucking joke
+#line 13606 FUCKING STUPID ITALIAN CUNTS HOPE THEY ALL CHOKE ON THEIR PIZZA AFTER THE GAME DIE DIE DIE
+#line 36388 FUCKING STUPID ITALIAN CUNTS HOPE THEY ALL CHOKE ON THEIR PIZZA AFTER THE GAME DIE DIE DIE
+#line 50854  killed guard so hard game crashed Overkill
+posData<-data[order(-data[,3]),]
+head(posData)
+#so the postive five are:
+#line 4389 Great game great job guys Improving our name We won
+#line 4669 Great game great job guys Improving our name We won
+#line 27171 Great game great job guys Improving our name We won
+#line 75032 Valiant HeartsThe Great Wars is an exceptionally good game Great story telling with history psplus ValiantHearts
+#line 66389 Great Great Great matches team yesterday thats what im talking abut everyone brought their a game even myand
+```
+
+```{r}
+set.seed(333)
+tdms <- removeSparseTerms(str1.tdm, 0.999)
+v <- sort(rowSums(m), decreasing=TRUE)
+myNames <- names(v)
+d <- data.frame(word=myNames, freq=v)
+wordcloud(d$word, d$freq, min.freq=100,max.words = 100)
+```

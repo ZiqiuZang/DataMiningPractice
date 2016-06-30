@@ -1,0 +1,58 @@
+---
+title: "Ziqiu Practice"
+author: "Ziqiu"
+date: "June 7, 2016"
+output: html_document
+---
+
+This practice focuses on Text Mining theory. You will provide a written analysis based on the following information:
+
+Consider the text from Dr. Seuss below:
+
+"You have brains in your head. You have feet in your shoes. You can steer yourself in any direction you choose. You're on your own,
+ and you know what you know. And you are the guy who'll decide where to go."
+
+Perform the following tasks (either by hand or in R):
+
+Create a term by document matrix for the Dr. Seuss quote. Assume each sentence is a new document.
+Calculate the td-idf for three terms in the text. Assume each sentence is a new document.
+```{r}
+require(tm)
+x<-c("You have brains in your head.","You have feet in your shoes.","You can steer yourself in any direction you choose.","You're on your own,and you know what you know.", "And you are the guy who'll decide where to go.")
+x.corpus<-Corpus(DataframeSource(data.frame(x)))
+inspect(x.corpus)
+x.clean<-tm_map(x.corpus,stripWhitespace)
+x.clean.lc<-tm_map(x.clean,content_transformer(tolower))
+writeLines(as.character(x.clean.lc))
+x.tdm<-TermDocumentMatrix(x.clean.lc,control = list(minWordLength=1))
+x.tdm
+#this is a term by document matrix.
+inspect(x.tdm)
+```
+Calculate the td-idf for three terms in the text.
+I list all three terms here: "you have brains","in your head" ,"you have feet","in your shoes" "you can steer", "yourself in any"," direction you choose" "you're on your" "own,and you know" "what you know" " and you are" "the guy who'll" " decide where to " "go" all only show onece. so the tf-idf=(0.5+0.5*1/1)*(log5)=log(5)
+
+
+```{r}
+#Write a regular expression to segment the Dr. Seuss quote in to seperate sentences.
+require(stringr)
+y<-("You have brains in your head. You have feet in your shoes. You can steer yourself in any direction you choose. You're on your own,and you know what you know. And you are the guy who'll decide where to go.")
+y1<-gsub("\\.",".\n",y)
+y1
+#Write a regular expression to tokenize the Dr. Seuss quote.
+y2<-gsub("[ ]","\t ",y)
+y2<-strsplit(y," ")
+y2
+```
+Create a frequency signature for the Dr. Seuss quote. Assume each sentence is a new document.
+```{r}
+findAssocs(x.tdm, 'brains', 0.30)
+# Word Cloud
+m <- as.matrix(x.tdm)
+require(wordcloud)
+# calculate the frequency of words
+v <- sort(rowSums(m), decreasing=TRUE)
+myNames <- names(v)
+d <- data.frame(word=myNames, freq=v)
+wordcloud(d$word, d$freq, min.freq=1)
+```
